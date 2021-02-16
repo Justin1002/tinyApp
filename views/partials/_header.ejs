@@ -4,19 +4,29 @@
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse mr-auto" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/urls">My URLs</a>
-        <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+      <ul class ="navbar-nav mr-auto">
+        <li>
+          <a class="nav-item nav-link" href="/urls">My URLs</a>
+        </li>
+        <li>
+          <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+        </li>
+      </ul>
+      <% if (!user) { %>
+      <ul class ="navbar-nav">
+        <li>
+          <a class="nav-item nav-link" href="/register">Register</a>
+        </li>
+        <li>
+          <a class="nav-item nav-link" href="/login">Login</a>
+        </li>
+      </ul>
       </div>
-      <% if (!username) { %>
-      <form class="form-inline ml-auto" action="/login/" method ="POST">
-        <input class="form-control mr-sm-2" type="text" name="Username" placeholder="Username" aria-label="Search">
-        <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Login</button>
-      </form>
       <% } else{ %>
-        <span class="navbar-text ml-auto" style ="color:black">
-          Logged In As: <%= username %>!
+      </div>
+        <span class="navbar-text ml-auto" style ="color:black; margin:0.5em">
+          Logged In As: <%= user['email'] %>!
         </span>
         <form class="form-inline" action="/logout/" method ="POST" style ="margin: 0.5em">
           <button class="btn btn-outline-dark my-2 my-sm-0" type="submit">Logout</button>

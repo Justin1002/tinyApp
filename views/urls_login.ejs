@@ -13,17 +13,20 @@
   <body>
 
     <%- include('partials/_header') %>
+    <h1 style="margin: 0.2em">Login</h1>
+    <form action="/login" method="POST">
+      <div class="form-group">
+        <label for="exampleInputEmail1" style ="margin: 0.5em">Email address</label>
+        <input type="email" name="email" class="form-control" id="exampleInputEmail" aria-describedby="emailHelp" placeholder="Enter email" style="width: 300px; margin: 0.5em">
+      </div>
+      <div class="form-group">
+        <label for="exampleInputPassword1" style="margin:0.5em">Password</label>
+        <input type="password" name="password" class="form-control" id="exampleInputPassword" placeholder="Password" style="width: 300px; margin: 0.5em">
+      </div>
+      <button type="submit" class="btn btn-primary" style="margin:0.5em">Login</button>
+    </form>
 
-    <main style ="margin: 1em;">
-      <h3>Create TinyURL</h3>
-      <form class ="form-inline" action="/urls" method="POST">
-        <div class ="form-group mb-2">
-          <label for="longURL">Enter a URL:</label>
-          <input class ="form-control" type="text" name="longURL" placeholder="http://" style="width: 300px; margin: 1em">
-          <button type="submit" class="btn btn-primary">submit</button>
-        </div>
-      </form>
-    </main>
+
       <!-- Bootstrap JS -->
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>

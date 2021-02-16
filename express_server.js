@@ -1,9 +1,9 @@
 const express = require("express");
-const app = express();
-const PORT = 8080;
-
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
+const { generateRandomString,checkEmail, checkPassword } = require("./helper")
+const app = express();
+const PORT = 8080;
 
 app.set('view engine', 'ejs')
 app.use(bodyParser.urlencoded({extended: true}));
@@ -22,45 +22,42 @@ const users = {
   },
 }
 
-function generateRandomString() {
-  let size = 6;
-  let charset = "abcdefghijklmnopqrxtuvwxyzABCDEFGHIJKLMNOPQRXTUVWXYZ0123456789"
-  let result = "";
-  for (let i = 0; i < size; i++) {
-    result += charset[Math.floor(Math.random()*charset.length)];
-  }
-  return result
-}
-
-function checkEmail(users, email) {
-  for (let person in users) {
-    if (users[person]['email'] === email) {
-      return true
-    }
-  }
-  return false
-}
-
-function checkPassword(users, password) {
-  for (let person in users) {
-    if (users[person]['password'] === password) {
-      return [true, users[person]['id']]
-    }
-  }
-  return false
-}
-
-app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-})
+app.get("/register", (req, res) => {
+  function findUser(users) {
+    for (person in users) {
+      if(req.cookies['user_id'] === person) {
+        return users[person]
+      }
+    }
+  }
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users)
+  };  
+  res.render("urls_register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  function findUser(users) {
+    for (person in users) {
+      if(req.cookies['user_id'] === person) {
+        return users[person]
+      }
+    }
+  }
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users)
+  };  
+  res.render("urls_login", templateVars);
+});
+
+
 
 app.get("/urls", (req, res) => {
   function findUser(users) {
@@ -76,16 +73,6 @@ app.get("/urls", (req, res) => {
   };  
   res.render("urls_index", templateVars);
 });
-
-app.post("/urls", (req, res) => {
-  let longURL = req.body["longURL"]
-  let shortURL = generateRandomString()
-  urlDatabase[shortURL] = {}
-  urlDatabase[shortURL]['longURL'] = longURL
-  urlDatabase[shortURL]['userID'] = req.cookies['user_id']
-  console.log(urlDatabase)
-  res.redirect(`/urls/${shortURL}`);
-})
 
 app.get("/urls/new", (req, res) => {
   function findUser(users) {
@@ -135,6 +122,18 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
+
+app.post("/urls", (req, res) => {
+  let longURL = req.body["longURL"]
+  let shortURL = generateRandomString()
+  urlDatabase[shortURL] = {}
+  urlDatabase[shortURL]['longURL'] = longURL
+  urlDatabase[shortURL]['userID'] = req.cookies['user_id']
+  console.log(urlDatabase)
+  res.redirect(`/urls/${shortURL}`);
+})
+
+
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL
   if (req.cookies['user_id'] === urlDatabase[shortURL]['userID']) {
@@ -156,6 +155,27 @@ app.post("/urls/:id", (req, res) => {
   else {
     res.status(403).send('Error code 403: Restricted Action')
   }
+})
+
+app.post("/register", (req, res) => {
+  let email = req.body['email']
+  console.log(email)
+  if (req.body['email'] === "" || req.body['password'] === "") {
+    res.status(400).send('Error code 400: email and/or password empty')
+  }
+  else if (checkEmail(users,email)) {
+    res.status(400).send('Error code 400: email already exists')
+  }
+  else {
+  let uniqueID = generateRandomString()
+  users[uniqueID] = {}
+  users[uniqueID]['id'] = uniqueID
+  users[uniqueID]['email'] = req.body['email']
+  users[uniqueID]['password'] = req.body['password']
+  res.cookie('user_id', uniqueID)
+  res.redirect(`/urls`);
+  }
+
 })
 
 app.post("/login/", (req, res) => {
@@ -185,53 +205,3 @@ app.listen(PORT, () => {
 });
 
 
-app.get("/register", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
-  const templateVars = {
-    urls: urlDatabase,
-    user: findUser(users)
-  };  
-  res.render("urls_register", templateVars);
-});
-
-app.post("/register", (req, res) => {
-  let email = req.body['email']
-  console.log(email)
-  if (req.body['email'] === "" || req.body['password'] === "") {
-    res.status(400).send('Error code 400: email and/or password empty')
-  }
-  else if (checkEmail(users,email)) {
-    res.status(400).send('Error code 400: email already exists')
-  }
-  else {
-  let uniqueID = generateRandomString()
-  users[uniqueID] = {}
-  users[uniqueID]['id'] = uniqueID
-  users[uniqueID]['email'] = req.body['email']
-  users[uniqueID]['password'] = req.body['password']
-  res.cookie('user_id', uniqueID)
-  res.redirect(`/urls`);
-  }
-
-})
-
-app.get("/login", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
-  const templateVars = {
-    urls: urlDatabase,
-    user: findUser(users)
-  };  
-  res.render("urls_login", templateVars);
-});

@@ -10,8 +10,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser())
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 }
 
 const users = {
@@ -44,16 +44,7 @@ function checkEmail(users, email) {
 function checkPassword(users, password) {
   for (let person in users) {
     if (users[person]['password'] === password) {
-      return true
-    }
-  }
-  return false
-}
-
-function checkUsers(users, password) {
-  for (let person in users) {
-    if (users[person]['password'] === password) {
-      return users[person]['id']
+      return [true, users[person]['id']]
     }
   }
   return false
@@ -89,7 +80,10 @@ app.get("/urls", (req, res) => {
 app.post("/urls", (req, res) => {
   let longURL = req.body["longURL"]
   let shortURL = generateRandomString()
-  urlDatabase[shortURL] = longURL
+  urlDatabase[shortURL] = {}
+  urlDatabase[shortURL]['longURL'] = longURL
+  urlDatabase[shortURL]['userID'] = req.cookies['user_id']
+  console.log(urlDatabase)
   res.redirect(`/urls/${shortURL}`);
 })
 
@@ -104,8 +98,13 @@ app.get("/urls/new", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
     user: findUser(users)
-  };  
+  };
+  if(req.cookies['user_id']) {  
   res.render("urls_new", templateVars);
+  }
+  else {
+    res.redirect(`/login`);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -121,26 +120,42 @@ app.get("/urls/:shortURL", (req, res) => {
     user: findUser(users)
   };  
   templateVars['shortURL'] = req.params.shortURL
-  templateVars['longURL'] = urlDatabase[req.params.shortURL]
+  templateVars['longURL'] = urlDatabase[req.params.shortURL]['longURL']
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL]};
-  const longURL = templateVars["longURL"]
+  let longURL = urlDatabase[req.params.shortURL]['longURL']
+  if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1 ) {
   res.redirect(longURL);
+  }
+  else {
+    longURL = 'http://' + longURL
+    res.redirect(longURL)
+  }
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL
-  delete urlDatabase[shortURL]
-  res.redirect(`/urls/`);
+  if (req.cookies['user_id'] === urlDatabase[shortURL]['userID']) {
+    delete urlDatabase[shortURL]
+    res.redirect(`/urls/`);
+  }
+  else {
+    res.status(403).send('Error code 403: Restricted Action')
+  }
 })
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id
-  urlDatabase[id] = req.body['newURL']
-  res.redirect(`/urls/`);
+  console.log(urlDatabase)
+  if (req.cookies['user_id'] === urlDatabase[id]['userID']) {
+    urlDatabase[id]['longURL'] = req.body['newURL']
+    res.redirect(`/urls/`);
+  }
+  else {
+    res.status(403).send('Error code 403: Restricted Action')
+  }
 })
 
 app.post("/login/", (req, res) => {
@@ -150,8 +165,8 @@ app.post("/login/", (req, res) => {
     res.status(403).send('Error code 403: Email cannot be found')
   }
   else {
-    if(checkPassword(users,pw)) {
-      res.cookie('user_id',checkUsers(users,pw));
+    if(checkPassword(users,pw)[0]) {
+      res.cookie('user_id',checkPassword(users,pw)[1]);
       res.redirect(`/urls`);
     }
     else {

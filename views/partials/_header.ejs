@@ -13,7 +13,7 @@
           <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
         </li>
       </ul>
-      <% if (!user) { %>
+      <% if (Object.keys(user).length === 0) { %>
       <ul class ="navbar-nav">
         <li>
           <a class="nav-item nav-link" href="/register">Register</a>

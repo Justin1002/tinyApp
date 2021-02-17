@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt')
+
 function generateRandomString() {
   let size = 6;
   let charset = "abcdefghijklmnopqrxtuvwxyzABCDEFGHIJKLMNOPQRXTUVWXYZ0123456789"
@@ -19,11 +21,13 @@ function checkEmail(users, email) {
 
 function checkPassword(users, password) {
   for (let person in users) {
-    if (users[person]['password'] === password) {
+    if (bcrypt.compareSync(password, users[person]['password'])) {
       return [true, users[person]['id']]
     }
   }
   return false
 }
 
-module.exports = {generateRandomString, checkEmail, checkPassword}
+function findUser(users, userID) {return users[userID] ? users[userID] : {}}
+
+module.exports = {generateRandomString, checkEmail, checkPassword, findUser}

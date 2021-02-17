@@ -1,7 +1,8 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser')
-const { generateRandomString,checkEmail, checkPassword } = require("./helper")
+const bcrypt = require('bcrypt')
+const { generateRandomString,checkEmail, checkPassword, findUser } = require("./helper")
 const app = express();
 const PORT = 8080;
 
@@ -22,70 +23,53 @@ const users = {
   },
 }
 
+app.get("/", (req, res) => {
+  if(req.cookies['user_id']) {
+    res.redirect('/urls')
+  }
+  else {
+    res.redirect('/login')
+  }
+});
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
 app.get("/register", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
+  const userID = req.cookies['user_id']
   const templateVars = {
     urls: urlDatabase,
-    user: findUser(users)
+    user: findUser(users,userID)
   };  
   res.render("urls_register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
+  const userID = req.cookies['user_id']
   const templateVars = {
     urls: urlDatabase,
-    user: findUser(users)
+    user: findUser(users,userID)
   };  
-  res.render("urls_login", templateVars);
+res.render("urls_login", templateVars);
 });
 
-
-
 app.get("/urls", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
+  const userID = req.cookies['user_id']
   const templateVars = {
     urls: urlDatabase,
-    user: findUser(users)
+    user: findUser(users,userID)
   };  
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
+  const userID = req.cookies['user_id']
   const templateVars = {
     urls: urlDatabase,
-    user: findUser(users)
-  };
+    user: findUser(users,userID)
+  };  
+
   if(req.cookies['user_id']) {  
   res.render("urls_new", templateVars);
   }
@@ -95,29 +79,26 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  function findUser(users) {
-    for (person in users) {
-      if(req.cookies['user_id'] === person) {
-        return users[person]
-      }
-    }
-  }
+
+  const userID = req.cookies['user_id']
   const templateVars = {
     urls: urlDatabase,
-    user: findUser(users)
-  };  
-  templateVars['shortURL'] = req.params.shortURL
-  templateVars['longURL'] = urlDatabase[req.params.shortURL]['longURL']
+    user: findUser(users,userID),
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL]['longURL']
+  };
   res.render("urls_show", templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
   let longURL = urlDatabase[req.params.shortURL]['longURL']
   if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1 ) {
+  urlDatabase[req.params.shortURL]['count'] = (urlDatabase[req.params.shortURL]['count']+1) || 1;
   res.redirect(longURL);
   }
   else {
     longURL = 'http://' + longURL
+    urlDatabase[req.params.shortURL]['count'] = (urlDatabase[req.params.shortURL]['count']+1) || 1;
     res.redirect(longURL)
   }
 });
@@ -126,10 +107,7 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/urls", (req, res) => {
   let longURL = req.body["longURL"]
   let shortURL = generateRandomString()
-  urlDatabase[shortURL] = {}
-  urlDatabase[shortURL]['longURL'] = longURL
-  urlDatabase[shortURL]['userID'] = req.cookies['user_id']
-  console.log(urlDatabase)
+  urlDatabase[shortURL] = {longURL: longURL, userID: req.cookies['user_id']}
   res.redirect(`/urls/${shortURL}`);
 })
 
@@ -168,11 +146,10 @@ app.post("/register", (req, res) => {
   }
   else {
   let uniqueID = generateRandomString()
-  users[uniqueID] = {}
-  users[uniqueID]['id'] = uniqueID
-  users[uniqueID]['email'] = req.body['email']
-  users[uniqueID]['password'] = req.body['password']
+  let hashedPW = bcrypt.hashSync(req.body['password'], 10);
+  users[uniqueID] = {id: uniqueID, email: req.body['email'], password: hashedPW}
   res.cookie('user_id', uniqueID)
+  console.log(users)
   res.redirect(`/urls`);
   }
 
@@ -181,6 +158,7 @@ app.post("/register", (req, res) => {
 app.post("/login/", (req, res) => {
   let email = req.body['email']
   let pw = req.body['password']
+
   if (!checkEmail(users,email)) {
     res.status(403).send('Error code 403: Email cannot be found')
   }

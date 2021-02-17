@@ -20,7 +20,9 @@
           <th scope="col">Long URL</th>
           <th scope="col">Edit</th>
           <th scope="col">Delete</th>
+          <th scope="col">Date Created</th>
           <th scope="col">Hits</th>
+          <th scope="col">Unique Visitors</th>
         </tr>
       </thead>
       <tbody>
@@ -39,15 +41,23 @@
                   <button type="delete" class="btn btn-outline-danger">Delete</button>
                   </form>
                 </td>
+                <td><%= urls[url]['date'] %></td>
                 <td><%= urls[url]['count'] %></td>
+                <td> <% if (visitors[url]) { %> 
+                  <%= visitors[url].length %>
+                <% } %>
+                </td>
               </tr>
             <% } %>
           <% } %>
       </tbody>
     </table>
+    <form method="GET" action="/urls/new">
+    <button type="submit" class="btn btn-primary btn-lg">Create A New Short Link</button>
+    </form>
     <% } else { %>
       <h2 style="margin: 0.5em">Welcome! </h2>
-      <h3 style ="margin :0.5em">Please login or register to continue </h3>
+      <h3 style ="margin :0.5em">Please login or register to continue. </h3>
       <% } %>
   </main>
   <!-- Bootstrap JS -->

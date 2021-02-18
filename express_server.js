@@ -122,11 +122,8 @@ app.get("/urls/:shortURL", (req, res) => {
     res.status(403);
     const templateVars = {
       urls: urlDatabase,
-      user: findUser(users,userID),
-      error: "URL does not exist",
-      statusCode: res.statusCode
-    };
-    res.render('urls_error.ejs', templateVars);
+      user: findUser(users,userID)[nodemon] restarting due to changes...
+      emplateVars);
   }
 });
 
@@ -304,7 +301,7 @@ app.get('*', function(req, res){
 
 //** server initialization message **//
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp listening on port ${PORT}!`);
 });
 
 

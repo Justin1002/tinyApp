@@ -15,12 +15,12 @@ app.use(cookieSession({
 }));
 app.use(methodOverride('_method'));
 
-const urlDatabase = {
+let urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
-const users = {
+let users = {
   "userRandomID": {
     id:"userRandomID",
     email:"user@example.com",
@@ -28,7 +28,7 @@ const users = {
   },
 };
 
-const visitorData = {};
+let visitorData = {};
 
 app.get("/", (req, res) => {
   if (req.session.user_id) {
@@ -36,10 +36,6 @@ app.get("/", (req, res) => {
   } else {
     res.redirect('/login');
   }
-});
-
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
 });
 
 app.get("/register", (req, res) => {
@@ -69,6 +65,11 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
+  //reloads page instead of the cached version
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.header('Expires', '-1');
+  res.header('Pragma', 'no-cache');
+
   const userID = req.session.user_id;
   const templateVars = {
     urls: urlDatabase,
@@ -93,8 +94,13 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
+  //automatically reloads page instead of loading the cached version
+  res.header('Cache-Control', 'private, no-cache, no-store, must-revalidate');
+  res.header('Expires', '-1');
+  res.header('Pragma', 'no-cache');
+
   const userID = req.session.user_id;
-  console.log(visitorData);
+
   if (urlDatabase[req.params.shortURL]) {
     const templateVars = {
       urls: urlDatabase,
@@ -124,16 +130,18 @@ app.get("/u/:shortURL", (req, res) => {
     if (!req.session.visitor_id) {
       req.session.visitor_id = generateRandomString();
     }
+    
     const visitorID = req.session.visitor_id;
-
-    if (!visitorData[shortURL]) {
-      visitorData[shortURL] = {};
+    let currentVisitorData = visitorData[shortURL]
+    
+    if (!currentVisitorData) {
+      visitorData[shortURL] = { [visitorID]: [] }
+    
+    } else if (!currentVisitorData[visitorID]) {
       visitorData[shortURL][visitorID] = [];
-      visitorData[shortURL][visitorID].push(timeStamp());
-    } else {
-      visitorData[shortURL][visitorID].push(timeStamp());
     }
-    // console.log(visitorData)
+
+    visitorData[shortURL][visitorID].push(timeStamp());
 
     //count hits
     if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1) {

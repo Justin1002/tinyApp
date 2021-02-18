@@ -122,8 +122,11 @@ app.get("/urls/:shortURL", (req, res) => {
     res.status(403);
     const templateVars = {
       urls: urlDatabase,
-      user: findUser(users,userID)[nodemon] restarting due to changes...
-      emplateVars);
+      user: findUser(users,userID),
+      error: "URL does not exist",
+      statusCode: res.statusCode
+    };
+    res.render('urls_error.ejs', templateVars);
   }
 });
 
@@ -286,7 +289,6 @@ app.post("/logout/", (req, res) => {
 });
 
 //** 404 route **//
-
 app.get('*', function(req, res){
   const userID = req.session.user_id;
   res.status(404);

@@ -195,8 +195,6 @@ app.delete("/urls/:shortURL", (req, res) => {
 
 app.put("/urls/:id", (req, res) => {
   const id = req.params.id;
-  console.log(id)
-  console.log(urlDatabase);
   if (req.session.user_id === urlDatabase[id]['userID']) {
     urlDatabase[id]['longURL'] = req.body['newURL'];
     res.redirect(`/urls/`);

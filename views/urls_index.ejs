@@ -42,10 +42,17 @@
                   </form>
                 </td>
                 <td><%= urls[url]['date'] %></td>
-                <td><%= urls[url]['count'] %></td>
+                <td>  <%if (urls[url]['count']) { %> 
+                        <%= urls[url]['count'] %>
+                      <% } else { %> 
+                        0
+                      <% } %> 
+                </td>
                 <td> <% if (visitors[url]) { %> 
                   <%= Object.keys(visitors[url]).length %>
-                <% } %>
+                <% } else { %>
+                  0                  
+                 <% } %>
                 </td>
               </tr>
             <% } %>

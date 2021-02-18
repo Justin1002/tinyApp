@@ -29,13 +29,13 @@ Added Extras include:
 
 1. Method Override to modify routes, adding PUT/DELETE functionality
 
-2. Number of visits("hits") a shortened URL link has received (see
+2. Number of visits("hits") a shortened URL link has received.
 
-3. Number of unique visitors to a shortened URL link
+3. Number of unique visitors to a shortened URL link.
 
-4. Customized error handling
+4. Customized error handling.
 
-5. Timestamp of all visits by unique visitor ID
+5. Timestamp of all visits by unique visitor ID.
 
-6. URL input can omit http:// or https:// for added user functionality
+6. URL input can omit http:// or https:// for added user functionality.
 

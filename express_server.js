@@ -106,7 +106,7 @@ app.get("/urls/:shortURL", (req, res) => {
   res.header('Pragma', 'no-cache');
 
   const userID = req.session.user_id;
-  const { shortURL } = req.params
+  const { shortURL } = req.params;
 
   // Checks if the URL exists, otherwise show an error page
   if (urlDatabase[shortURL]) {
@@ -131,10 +131,10 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  const { shortURL } = req.params
+  const { shortURL } = req.params;
   // Checks if the short URL exists, otherwise show an error page
   if (urlDatabase[shortURL]) {
-    const longURL = urlDatabase[shortURL]['longURL'];
+    let longURL = urlDatabase[shortURL]['longURL'];
     
     //Creates a unique cookie for a visitor
     if (!req.session.visitor_id) {
@@ -142,11 +142,11 @@ app.get("/u/:shortURL", (req, res) => {
     }
     
     const visitorID = req.session.visitor_id;
-    const currentVisitorData = visitorData[shortURL]
+    const currentVisitorData = visitorData[shortURL];
 
     //Creates a timestamp for the unique visitor when they visit the site
     if (!currentVisitorData) {
-      visitorData[shortURL] = { [visitorID]: [] }
+      visitorData[shortURL] = { [visitorID]: [] };
     
     } else if (!currentVisitorData[visitorID]) {
       visitorData[shortURL][visitorID] = [];
@@ -154,14 +154,14 @@ app.get("/u/:shortURL", (req, res) => {
 
     visitorData[shortURL][visitorID].push(timeStamp());
 
-    //Checks if URL submitted has http:// or https:// in front for correct routing, if not then it will add it to the string when rerouted. 
+    //Checks if URL submitted has http:// or https:// in front for correct routing, if not then it will add it to the string when rerouted.
     if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1) {
       //tracks number of visitors to a link in the shortURL object
       urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
       res.redirect(longURL);
     } else {
       longURL = 'http://' + longURL;
-       //tracks number of visitors to a link in the shortURL object
+      //tracks number of visitors to a link in the shortURL object
       urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
       res.redirect(longURL);
     }
@@ -281,7 +281,7 @@ app.post("/login/", (req, res) => {
   }
 });
 
- //Clears the cookies from the session when logout button is clicked
+//Clears the cookies from the session when logout button is clicked
 app.post("/logout/", (req, res) => {
   res.clearCookie('session');
   res.clearCookie('session.sig');
@@ -289,7 +289,7 @@ app.post("/logout/", (req, res) => {
 });
 
 //** 404 route **//
-app.get('*', function(req, res){
+app.get('*', function(req, res) {
   const userID = req.session.user_id;
   res.status(404);
   const templateVars = {

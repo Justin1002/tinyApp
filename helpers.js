@@ -32,4 +32,9 @@ function findUser(users, userID) {
   return users[userID] ? users[userID] : {};
 }
 
-module.exports = {generateRandomString, checkEmail, checkPassword, findUser};
+function timeStamp() {
+  let d = new Date();
+  let string = `${d.toLocaleString('en-US',{timeZone:'UTC'})} UTC`;
+  return string;
+}
+module.exports = {generateRandomString, checkEmail, checkPassword, findUser, timeStamp};

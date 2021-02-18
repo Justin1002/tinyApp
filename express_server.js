@@ -183,7 +183,7 @@ app.post("/urls", (req, res) => {
 });
 
 
-app.delete("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   if (req.session.user_id === urlDatabase[shortURL]['userID']) {
     delete urlDatabase[shortURL];
@@ -195,6 +195,7 @@ app.delete("/urls/:shortURL/delete", (req, res) => {
 
 app.put("/urls/:id", (req, res) => {
   const id = req.params.id;
+  console.log(id)
   console.log(urlDatabase);
   if (req.session.user_id === urlDatabase[id]['userID']) {
     urlDatabase[id]['longURL'] = req.body['newURL'];

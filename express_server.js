@@ -269,6 +269,19 @@ app.post("/logout/", (req, res) => {
   res.redirect(`/urls/`);
 });
 
+//404 route
+app.get('*', function(req, res){
+  const userID = req.session.user_id;
+  res.status(404);
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users,userID),
+    error: "PAGE NOT FOUND",
+    statusCode: res.statusCode
+  };
+  res.render('urls_error.ejs', templateVars);
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

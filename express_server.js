@@ -100,13 +100,14 @@ app.get("/urls/:shortURL", (req, res) => {
   res.header('Pragma', 'no-cache');
 
   const userID = req.session.user_id;
+  const { shortURL } = req.params
 
-  if (urlDatabase[req.params.shortURL]) {
+  if (urlDatabase[shortURL]) {
     const templateVars = {
       urls: urlDatabase,
       user: findUser(users,userID),
-      shortURL: req.params.shortURL,
-      longURL: urlDatabase[req.params.shortURL]['longURL'],
+      shortURL: shortURL,
+      longURL: urlDatabase[shortURL]['longURL'],
       visitors: visitorData
     };
     res.render("urls_show", templateVars);
@@ -123,16 +124,16 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  if (urlDatabase[req.params.shortURL]) {
-    let shortURL = req.params.shortURL;
-    let longURL = urlDatabase[shortURL]['longURL'];
+  const { shortURL } = req.params
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL]['longURL'];
     //log unique visitor data
     if (!req.session.visitor_id) {
       req.session.visitor_id = generateRandomString();
     }
     
     const visitorID = req.session.visitor_id;
-    let currentVisitorData = visitorData[shortURL]
+    const currentVisitorData = visitorData[shortURL]
     
     if (!currentVisitorData) {
       visitorData[shortURL] = { [visitorID]: [] }
@@ -175,16 +176,16 @@ app.get("/error/", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  let longURL = req.body["longURL"];
-  let shortURL = generateRandomString();
-  let date = new Date().toISOString().slice(0, 10);
+  const longURL = req.body["longURL"];
+  const shortURL = generateRandomString();
+  const date = new Date().toISOString().slice(0, 10);
   urlDatabase[shortURL] = {longURL: longURL, userID: req.session.user_id, date: date};
   res.redirect(`/urls/${shortURL}`);
 });
 
 
 app.delete("/urls/:shortURL", (req, res) => {
-  const shortURL = req.params.shortURL;
+  const { shortURL } = req.params;
   if (req.session.user_id === urlDatabase[shortURL]['userID']) {
     delete urlDatabase[shortURL];
     res.redirect(`/urls/`);
@@ -194,7 +195,7 @@ app.delete("/urls/:shortURL", (req, res) => {
 });
 
 app.put("/urls/:id", (req, res) => {
-  const id = req.params.id;
+  const { id } = req.params;
   if (req.session.user_id === urlDatabase[id]['userID']) {
     urlDatabase[id]['longURL'] = req.body['newURL'];
     res.redirect(`/urls/`);
@@ -204,8 +205,9 @@ app.put("/urls/:id", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  let email = req.body['email'];
-  if (req.body['email'] === "" || req.body['password'] === "") {
+  const email = req.body['email'];
+  const password = req.body['password'];
+  if (email === "" || password === "") {
     const userID = req.session.user_id;
     res.status(400);
     const templateVars = {
@@ -228,17 +230,17 @@ app.post("/register", (req, res) => {
     res.render('urls_error.ejs', templateVars);
 
   } else {
-    let uniqueID = generateRandomString();
-    let hashedPW = bcrypt.hashSync(req.body['password'], 10);
-    users[uniqueID] = {id: uniqueID, email: req.body['email'], password: hashedPW};
+    const uniqueID = generateRandomString();
+    const hashedPW = bcrypt.hashSync(password, 10);
+    users[uniqueID] = {id: uniqueID, email: email, password: hashedPW};
     req.session.user_id = uniqueID;
     res.redirect(`/urls`);
   }
 });
 
 app.post("/login/", (req, res) => {
-  let email = req.body['email'];
-  let pw = req.body['password'];
+  const email = req.body['email'];
+  const pw = req.body['password'];
 
   if (!checkEmail(users,email)) {
     const userID = req.session.user_id;

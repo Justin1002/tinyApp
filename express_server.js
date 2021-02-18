@@ -1,3 +1,4 @@
+/** Initialize code dependencies **/
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
@@ -15,6 +16,7 @@ app.use(cookieSession({
 }));
 app.use(methodOverride('_method'));
 
+/** Database initialization for URLs, users and visitor data **/
 let urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
@@ -38,12 +40,15 @@ app.get("/", (req, res) => {
   }
 });
 
+/** app.get routes **/
+
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
   const templateVars = {
     urls: urlDatabase,
     user: findUser(users,userID)
   };
+  // Redirect to main page if user is already logged in
   if (Object.keys(templateVars['user']).length === 0) {
     res.render("urls_register", templateVars);
   } else {
@@ -57,6 +62,7 @@ app.get("/login", (req, res) => {
     urls: urlDatabase,
     user: findUser(users,userID)
   };
+  // Redirect to main page if user is already logged in
   if (Object.keys(templateVars['user']).length === 0) {
     res.render("urls_login", templateVars);
   } else {
@@ -85,7 +91,7 @@ app.get("/urls/new", (req, res) => {
     urls: urlDatabase,
     user: findUser(users,userID)
   };
-  //check if there's a user_id cookie and the user is logged in
+  //check if there's a user_id cookie and the user is logged in, if not redirect to the login page
   if (req.session.user_id && Object.keys(templateVars['user']).length > 0) {
     res.render("urls_new", templateVars);
   } else {
@@ -102,6 +108,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const userID = req.session.user_id;
   const { shortURL } = req.params
 
+  // Checks if the URL exists, otherwise show an error page
   if (urlDatabase[shortURL]) {
     const templateVars = {
       urls: urlDatabase,
@@ -125,16 +132,19 @@ app.get("/urls/:shortURL", (req, res) => {
 
 app.get("/u/:shortURL", (req, res) => {
   const { shortURL } = req.params
+  // Checks if the short URL exists, otherwise show an error page
   if (urlDatabase[shortURL]) {
     const longURL = urlDatabase[shortURL]['longURL'];
-    //log unique visitor data
+    
+    //Creates a unique cookie for a visitor
     if (!req.session.visitor_id) {
       req.session.visitor_id = generateRandomString();
     }
     
     const visitorID = req.session.visitor_id;
     const currentVisitorData = visitorData[shortURL]
-    
+
+    //Creates a timestamp for the unique visitor when they visit the site
     if (!currentVisitorData) {
       visitorData[shortURL] = { [visitorID]: [] }
     
@@ -144,12 +154,14 @@ app.get("/u/:shortURL", (req, res) => {
 
     visitorData[shortURL][visitorID].push(timeStamp());
 
-    //count hits
+    //Checks if URL submitted has http:// or https:// in front for correct routing, if not then it will add it to the string when rerouted. 
     if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1) {
+      //tracks number of visitors to a link in the shortURL object
       urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
       res.redirect(longURL);
     } else {
       longURL = 'http://' + longURL;
+       //tracks number of visitors to a link in the shortURL object
       urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
       res.redirect(longURL);
     }
@@ -166,16 +178,10 @@ app.get("/u/:shortURL", (req, res) => {
   }
 });
 
-app.get("/error/", (req, res) => {
-  const userID = req.session.user_id;
-  const templateVars = {
-    urls: urlDatabase,
-    user: findUser(users,userID),
-  };
-  res.render('urls_error.ejs', templateVars);
-});
+/** app.post routes **/
 
 app.post("/urls", (req, res) => {
+  //Adds new url to the URL database, and redirects to the shortURL page
   const longURL = req.body["longURL"];
   const shortURL = generateRandomString();
   const date = new Date().toISOString().slice(0, 10);
@@ -186,6 +192,7 @@ app.post("/urls", (req, res) => {
 
 app.delete("/urls/:shortURL", (req, res) => {
   const { shortURL } = req.params;
+  //Checks if the user requesting the delete method is the authenticated user
   if (req.session.user_id === urlDatabase[shortURL]['userID']) {
     delete urlDatabase[shortURL];
     res.redirect(`/urls/`);
@@ -196,6 +203,7 @@ app.delete("/urls/:shortURL", (req, res) => {
 
 app.put("/urls/:id", (req, res) => {
   const { id } = req.params;
+  //Checks if the user requesting the edit URL method is the authenticated user
   if (req.session.user_id === urlDatabase[id]['userID']) {
     urlDatabase[id]['longURL'] = req.body['newURL'];
     res.redirect(`/urls/`);
@@ -207,6 +215,7 @@ app.put("/urls/:id", (req, res) => {
 app.post("/register", (req, res) => {
   const email = req.body['email'];
   const password = req.body['password'];
+  // check if email or password forms are empty
   if (email === "" || password === "") {
     const userID = req.session.user_id;
     res.status(400);
@@ -217,7 +226,7 @@ app.post("/register", (req, res) => {
       statusCode: res.statusCode
     };
     res.render('urls_error.ejs', templateVars);
-
+    // check if email already exists
   } else if (checkEmail(users,email)) {
     const userID = req.session.user_id;
     res.status(400);
@@ -228,7 +237,7 @@ app.post("/register", (req, res) => {
       statusCode: res.statusCode
     };
     res.render('urls_error.ejs', templateVars);
-
+    //registration successful
   } else {
     const uniqueID = generateRandomString();
     const hashedPW = bcrypt.hashSync(password, 10);
@@ -241,7 +250,7 @@ app.post("/register", (req, res) => {
 app.post("/login/", (req, res) => {
   const email = req.body['email'];
   const pw = req.body['password'];
-
+  //checks if email exists
   if (!checkEmail(users,email)) {
     const userID = req.session.user_id;
     res.status(404);
@@ -252,7 +261,7 @@ app.post("/login/", (req, res) => {
       statusCode: res.statusCode
     };
     res.render('urls_error.ejs', templateVars);
-
+    //checks if the inputted password matches the stored hash password and establishes the cookie if login was successful
   } else {
     if (checkPassword(users,pw)[0]) {
       req.session.user_id = checkPassword(users,pw)[1];
@@ -272,13 +281,15 @@ app.post("/login/", (req, res) => {
   }
 });
 
+ //Clears the cookies from the session when logout button is clicked
 app.post("/logout/", (req, res) => {
   res.clearCookie('session');
   res.clearCookie('session.sig');
   res.redirect(`/urls/`);
 });
 
-//404 route
+//** 404 route **//
+
 app.get('*', function(req, res){
   const userID = req.session.user_id;
   res.status(404);
@@ -291,6 +302,7 @@ app.get('*', function(req, res){
   res.render('urls_error.ejs', templateVars);
 });
 
+//** server initialization message **//
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });

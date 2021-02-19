@@ -30,14 +30,18 @@ let users = {
   },
 };
 
-let visitorData = {};
+let visitorData = { "urlID":
+{
+  "visitorID":["t1", "t2", "t3"],
+  "visitorID2":["t1","t2","t3"]
+}
+};
 
 app.get("/", (req, res) => {
   if (req.session.user_id) {
-    res.redirect('/urls');
-  } else {
-    res.redirect('/login');
+    return res.redirect('/urls');
   }
+  return res.redirect('/login');
 });
 
 /** app.get routes **/
@@ -50,10 +54,9 @@ app.get("/register", (req, res) => {
   };
   // Redirect to main page if user is already logged in
   if (Object.keys(templateVars['user']).length === 0) {
-    res.render("urls_register", templateVars);
-  } else {
-    res.redirect('/urls/');
+    return res.render("urls_register", templateVars);
   }
+  return res.redirect('/urls/');
 });
 
 app.get("/login", (req, res) => {
@@ -64,10 +67,9 @@ app.get("/login", (req, res) => {
   };
   // Redirect to main page if user is already logged in
   if (Object.keys(templateVars['user']).length === 0) {
-    res.render("urls_login", templateVars);
-  } else {
-    res.redirect('/urls/');
+    return res.render("urls_login", templateVars);
   }
+  return res.redirect('/urls/');
 });
 
 app.get("/urls", (req, res) => {
@@ -93,10 +95,11 @@ app.get("/urls/new", (req, res) => {
   };
   //check if there's a user_id cookie and the user is logged in, if not redirect to the login page
   if (req.session.user_id && Object.keys(templateVars['user']).length > 0) {
-    res.render("urls_new", templateVars);
-  } else {
-    res.redirect(`/login`);
+    return res.render("urls_new", templateVars);
   }
+
+  return res.redirect(`/login`);
+  
 });
 
 app.get("/urls/:shortURL", (req, res) => {
@@ -117,17 +120,17 @@ app.get("/urls/:shortURL", (req, res) => {
       longURL: urlDatabase[shortURL]['longURL'],
       visitors: visitorData
     };
-    res.render("urls_show", templateVars);
-  } else {
-    res.status(403);
-    const templateVars = {
-      urls: urlDatabase,
-      user: findUser(users,userID),
-      error: "URL does not exist",
-      statusCode: res.statusCode
-    };
-    res.render('urls_error.ejs', templateVars);
+    return res.render("urls_show", templateVars);
   }
+
+  res.status(403);
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users,userID),
+    error: "URL does not exist",
+    statusCode: res.statusCode
+  };
+  return res.render('urls_error.ejs', templateVars);
 });
 
 app.get("/u/:shortURL", (req, res) => {
@@ -145,9 +148,9 @@ app.get("/u/:shortURL", (req, res) => {
     const currentVisitorData = visitorData[shortURL];
 
     //Creates a timestamp for the unique visitor when they visit the site
+
     if (!currentVisitorData) {
       visitorData[shortURL] = { [visitorID]: [] };
-    
     } else if (!currentVisitorData[visitorID]) {
       visitorData[shortURL][visitorID] = [];
     }
@@ -158,24 +161,23 @@ app.get("/u/:shortURL", (req, res) => {
     if (longURL.indexOf("http://") !== -1 || longURL.indexOf("https://") !== -1) {
       //tracks number of visitors to a link in the shortURL object
       urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
-      res.redirect(longURL);
-    } else {
-      longURL = 'http://' + longURL;
-      //tracks number of visitors to a link in the shortURL object
-      urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
-      res.redirect(longURL);
+      return res.redirect(longURL);
     }
-  } else {
-    const userID = req.session.user_id;
-    res.status(403);
-    const templateVars = {
-      urls: urlDatabase,
-      user: findUser(users,userID),
-      error: "URL does not exist",
-      statusCode: res.statusCode
-    };
-    res.render('urls_error.ejs', templateVars);
+    longURL = 'http://' + longURL;
+    //tracks number of visitors to a link in the shortURL object
+    urlDatabase[shortURL]['count'] = (urlDatabase[shortURL]['count'] + 1) || 1;
+    return res.redirect(longURL);
+    
   }
+  const userID = req.session.user_id;
+  res.status(403);
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users,userID),
+    error: "URL does not exist",
+    statusCode: res.statusCode
+  };
+  return res.render('urls_error.ejs', templateVars);
 });
 
 /** app.post routes **/
@@ -195,10 +197,9 @@ app.delete("/urls/:shortURL", (req, res) => {
   //Checks if the user requesting the delete method is the authenticated user
   if (req.session.user_id === urlDatabase[shortURL]['userID']) {
     delete urlDatabase[shortURL];
-    res.redirect(`/urls/`);
-  } else {
-    res.status(403).send('Error code 403: Restricted Action');
+    return res.redirect(`/urls/`);
   }
+  res.status(403).send('Error code 403: Restricted Action');
 });
 
 app.put("/urls/:id", (req, res) => {
@@ -206,10 +207,9 @@ app.put("/urls/:id", (req, res) => {
   //Checks if the user requesting the edit URL method is the authenticated user
   if (req.session.user_id === urlDatabase[id]['userID']) {
     urlDatabase[id]['longURL'] = req.body['newURL'];
-    res.redirect(`/urls/`);
-  } else {
-    res.status(403).send('Error code 403: Restricted Action');
+    return res.redirect(`/urls/`);
   }
+  res.status(403).send('Error code 403: Restricted Action');
 });
 
 app.post("/register", (req, res) => {
@@ -225,9 +225,10 @@ app.post("/register", (req, res) => {
       error: "email and/or password empty",
       statusCode: res.statusCode
     };
-    res.render('urls_error.ejs', templateVars);
+    return res.render('urls_error.ejs', templateVars);
     // check if email already exists
-  } else if (checkEmail(users,email)) {
+  }
+  if (checkEmail(users,email)) {
     const userID = req.session.user_id;
     res.status(400);
     const templateVars = {
@@ -236,15 +237,15 @@ app.post("/register", (req, res) => {
       error: "email already exists",
       statusCode: res.statusCode
     };
-    res.render('urls_error.ejs', templateVars);
+    return res.render('urls_error.ejs', templateVars);
     //registration successful
-  } else {
-    const uniqueID = generateRandomString();
-    const hashedPW = bcrypt.hashSync(password, 10);
-    users[uniqueID] = {id: uniqueID, email: email, password: hashedPW};
-    req.session.user_id = uniqueID;
-    res.redirect(`/urls`);
   }
+  const uniqueID = generateRandomString();
+  const hashedPW = bcrypt.hashSync(password, 10);
+  users[uniqueID] = {id: uniqueID, email: email, password: hashedPW};
+  req.session.user_id = uniqueID;
+  return res.redirect(`/urls`);
+
 });
 
 app.post("/login/", (req, res) => {
@@ -260,26 +261,25 @@ app.post("/login/", (req, res) => {
       error: "email not found",
       statusCode: res.statusCode
     };
-    res.render('urls_error.ejs', templateVars);
-    //checks if the inputted password matches the stored hash password and establishes the cookie if login was successful
-  } else {
-    if (checkPassword(users,pw)[0]) {
-      req.session.user_id = checkPassword(users,pw)[1];
-      res.redirect(`/urls`);
-
-    } else {
-      const userID = req.session.user_id;
-      res.status(403);
-      const templateVars = {
-        urls: urlDatabase,
-        user: findUser(users,userID),
-        error: "password is incorrect",
-        statusCode: res.statusCode
-      };
-      res.render('urls_error.ejs', templateVars);
-    }
+    return res.render('urls_error.ejs', templateVars);
   }
+  //checks if the inputted password matches the stored hash password and establishes the cookie if login was successful
+  if (checkPassword(users,pw)[0]) {
+    req.session.user_id = checkPassword(users,pw)[1];
+    return res.redirect(`/urls`);
+  }
+  // if password is incorrect
+  const userID = req.session.user_id;
+  res.status(403);
+  const templateVars = {
+    urls: urlDatabase,
+    user: findUser(users,userID),
+    error: "password is incorrect",
+    statusCode: res.statusCode
+  };
+  return res.render('urls_error.ejs', templateVars);
 });
+
 
 //Clears the cookies from the session when logout button is clicked
 app.post("/logout/", (req, res) => {

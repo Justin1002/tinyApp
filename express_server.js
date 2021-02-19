@@ -37,6 +37,8 @@ let visitorData = { "urlID":
 }
 };
 
+/** app.get routes **/
+
 app.get("/", (req, res) => {
   if (req.session.user_id) {
     return res.redirect('/urls');
@@ -44,14 +46,13 @@ app.get("/", (req, res) => {
   return res.redirect('/login');
 });
 
-/** app.get routes **/
-
 app.get("/register", (req, res) => {
   const userID = req.session.user_id;
   const templateVars = {
     urls: urlDatabase,
     user: findUser(users,userID)
   };
+  
   // Redirect to main page if user is already logged in
   if (Object.keys(templateVars['user']).length === 0) {
     return res.render("urls_register", templateVars);
